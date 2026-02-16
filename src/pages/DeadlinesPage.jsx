@@ -1,11 +1,25 @@
+import { useAppContext } from '../context/ApplicationContext';
 import { useDeadlines } from '../hooks/useDeadlines';
 import DeadlineCard from '../components/deadlines/DeadlineCard';
 import EmptyState from '../components/ui/EmptyState';
 import { useNavigate } from 'react-router';
 
 export default function DeadlinesPage() {
+  const { loading } = useAppContext();
   const { overdue, thisWeek, later } = useDeadlines();
   const navigate = useNavigate();
+
+  if (loading) {
+    return (
+      <div>
+        <h1 className="text-2xl font-bold text-gray-900 mb-6">Deadlines</h1>
+        <div className="flex justify-center py-20">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600" />
+        </div>
+      </div>
+    );
+  }
+
   const hasAny = overdue.length > 0 || thisWeek.length > 0 || later.length > 0;
 
   if (!hasAny) {

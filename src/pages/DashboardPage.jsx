@@ -9,9 +9,20 @@ import EmptyState from '../components/ui/EmptyState';
 import { useNavigate } from 'react-router';
 
 export default function DashboardPage() {
-  const { applications } = useAppContext();
+  const { applications, loading } = useAppContext();
   const deadlines = useDeadlines();
   const navigate = useNavigate();
+
+  if (loading) {
+    return (
+      <div>
+        <h1 className="text-2xl font-bold text-gray-900 mb-6">Dashboard</h1>
+        <div className="flex justify-center py-20">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600" />
+        </div>
+      </div>
+    );
+  }
 
   if (applications.length === 0) {
     return (

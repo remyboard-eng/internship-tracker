@@ -1,19 +1,38 @@
-import { useState, useCallback, useMemo } from 'react';
+import { useState, useCallback, useMemo, useEffect } from 'react';
 import { v4 as uuidv4 } from 'uuid';
-import { loadApplications, saveApplications } from '../utils/storage';
+import {
+  loadApplications,
+  apiAddApplication,
+  apiUpdateApplication,
+  apiDeleteApplication,
+} from '../utils/storage';
 
 export function useApplications() {
-  const [applications, setApplications] = useState(() => loadApplications());
+  const [applications, setApplications] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
-  const persist = useCallback((updater) => {
-    setApplications((prev) => {
-      const next = typeof updater === 'function' ? updater(prev) : updater;
-      saveApplications(next);
-      return next;
-    });
+  // Load data on mount
+  useEffect(() => {
+    let cancelled = false;
+    setLoading(true);
+    loadApplications()
+      .then((data) => {
+        if (!cancelled) {
+          setApplications(data);
+          setError(null);
+        }
+      })
+      .catch((err) => {
+        if (!cancelled) setError(err.message);
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false);
+      });
+    return () => { cancelled = true; };
   }, []);
 
-  const addApplication = useCallback((data) => {
+  const addApplication = useCallback(async (data, adminPassword) => {
     const now = new Date().toISOString();
     const newApp = {
       id: uuidv4(),
@@ -31,28 +50,44 @@ export function useApplications() {
       createdAt: now,
       updatedAt: now,
     };
-    persist((prev) => [...prev, newApp]);
-    return newApp;
-  }, [persist]);
+    const saved = await apiAddApplication(newApp, adminPassword);
+    setApplications((prev) => [saved, ...prev]);
+    return saved;
+  }, []);
 
-  const updateApplication = useCallback((id, data) => {
-    persist((prev) =>
-      prev.map((app) =>
-        app.id === id
-          ? { ...app, ...data, updatedAt: new Date().toISOString() }
-          : app
-      )
+  const updateApplication = useCallback(async (id, data, adminPassword) => {
+    const updates = { ...data, updatedAt: new Date().toISOString() };
+    const saved = await apiUpdateApplication(id, updates, adminPassword);
+    setApplications((prev) =>
+      prev.map((app) => (app.id === id ? saved : app))
     );
-  }, [persist]);
+  }, []);
 
-  const deleteApplication = useCallback((id) => {
-    persist((prev) => prev.filter((app) => app.id !== id));
-  }, [persist]);
+  const deleteApplication = useCallback(async (id, adminPassword) => {
+    await apiDeleteApplication(id, adminPassword);
+    setApplications((prev) => prev.filter((app) => app.id !== id));
+  }, []);
+
+  const refresh = useCallback(async () => {
+    setLoading(true);
+    try {
+      const data = await loadApplications();
+      setApplications(data);
+      setError(null);
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
 
   return useMemo(() => ({
     applications,
+    loading,
+    error,
     addApplication,
     updateApplication,
     deleteApplication,
-  }), [applications, addApplication, updateApplication, deleteApplication]);
+    refresh,
+  }), [applications, loading, error, addApplication, updateApplication, deleteApplication, refresh]);
 }

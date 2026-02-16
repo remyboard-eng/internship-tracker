@@ -1,10 +1,15 @@
 import { createContext, useContext } from 'react';
 import { useApplications } from '../hooks/useApplications';
+import { useAdminAuth } from '../hooks/useAdminAuth';
 
 const ApplicationContext = createContext(null);
 
 export function ApplicationProvider({ children }) {
-  const value = useApplications();
+  const appState = useApplications();
+  const authState = useAdminAuth();
+
+  const value = { ...appState, ...authState };
+
   return (
     <ApplicationContext.Provider value={value}>
       {children}
