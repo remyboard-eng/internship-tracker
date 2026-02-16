@@ -3,14 +3,13 @@ import { useAppContext } from '../context/ApplicationContext';
 import ApplicationTable from '../components/applications/ApplicationTable';
 import ApplicationFilters from '../components/applications/ApplicationFilters';
 import ApplicationModal from '../components/applications/ApplicationModal';
-import AdminLoginModal from '../components/ui/AdminLoginModal';
 import Button from '../components/ui/Button';
 
 export default function ApplicationsPage() {
   const {
     applications, loading,
     addApplication, updateApplication, deleteApplication,
-    isAdmin, adminPassword, login, logout,
+    adminUsername, adminPassword, logout,
   } = useAppContext();
 
   const [searchQuery, setSearchQuery] = useState('');
@@ -18,8 +17,6 @@ export default function ApplicationsPage() {
   const [sortConfig, setSortConfig] = useState({ key: 'updatedAt', direction: 'desc' });
   const [modalOpen, setModalOpen] = useState(false);
   const [editingApp, setEditingApp] = useState(null);
-  const [loginModalOpen, setLoginModalOpen] = useState(false);
-  const [pendingAction, setPendingAction] = useState(null);
   const [saving, setSaving] = useState(false);
 
   const filteredApps = useMemo(() => {
@@ -48,24 +45,6 @@ export default function ApplicationsPage() {
     return result;
   }, [applications, searchQuery, statusFilter, sortConfig]);
 
-  function requireAdmin(action) {
-    if (isAdmin) {
-      action();
-    } else {
-      setPendingAction(() => action);
-      setLoginModalOpen(true);
-    }
-  }
-
-  function handleLoginSuccess(password) {
-    login(password);
-    setLoginModalOpen(false);
-    if (pendingAction) {
-      pendingAction();
-      setPendingAction(null);
-    }
-  }
-
   function handleSort(key) {
     setSortConfig((prev) => ({
       key,
@@ -74,51 +53,45 @@ export default function ApplicationsPage() {
   }
 
   function handleEdit(app) {
-    requireAdmin(() => {
-      setEditingApp(app);
-      setModalOpen(true);
-    });
+    setEditingApp(app);
+    setModalOpen(true);
   }
 
   function handleAdd() {
-    requireAdmin(() => {
-      setEditingApp(null);
-      setModalOpen(true);
-    });
+    setEditingApp(null);
+    setModalOpen(true);
   }
 
-  function handleDelete(id) {
-    requireAdmin(async () => {
-      try {
-        setSaving(true);
-        await deleteApplication(id, adminPassword);
-      } catch (err) {
-        if (err.message.includes('Invalid admin password')) {
-          logout();
-          alert('Wrong password. Please try again.');
-        } else {
-          alert('Error: ' + err.message);
-        }
-      } finally {
-        setSaving(false);
+  async function handleDelete(id) {
+    try {
+      setSaving(true);
+      await deleteApplication(id, adminUsername, adminPassword);
+    } catch (err) {
+      if (err.message.includes('Invalid username or password')) {
+        logout();
+        alert('Session expired. Please log in again.');
+      } else {
+        alert('Error: ' + err.message);
       }
-    });
+    } finally {
+      setSaving(false);
+    }
   }
 
   async function handleSave(data) {
     try {
       setSaving(true);
       if (editingApp) {
-        await updateApplication(editingApp.id, data, adminPassword);
+        await updateApplication(editingApp.id, data, adminUsername, adminPassword);
       } else {
-        await addApplication(data, adminPassword);
+        await addApplication(data, adminUsername, adminPassword);
       }
       setModalOpen(false);
       setEditingApp(null);
     } catch (err) {
-      if (err.message.includes('Invalid admin password')) {
+      if (err.message.includes('Invalid username or password')) {
         logout();
-        alert('Wrong password. Please try again.');
+        alert('Session expired. Please log in again.');
       } else {
         alert('Error: ' + err.message);
       }
@@ -143,18 +116,14 @@ export default function ApplicationsPage() {
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center gap-3">
           <h1 className="text-2xl font-bold text-gray-900">Applications</h1>
-          {isAdmin && (
-            <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-700">
-              Admin
-            </span>
-          )}
+          <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-700">
+            Admin
+          </span>
         </div>
         <div className="flex items-center gap-2">
-          {isAdmin && (
-            <Button variant="ghost" size="sm" onClick={logout}>
-              Logout
-            </Button>
-          )}
+          <Button variant="ghost" size="sm" onClick={logout}>
+            Logout
+          </Button>
           <Button onClick={handleAdd} disabled={saving}>
             + Add Application
           </Button>
@@ -181,12 +150,6 @@ export default function ApplicationsPage() {
         onClose={() => { setModalOpen(false); setEditingApp(null); }}
         onSave={handleSave}
         application={editingApp}
-      />
-
-      <AdminLoginModal
-        isOpen={loginModalOpen}
-        onClose={() => { setLoginModalOpen(false); setPendingAction(null); }}
-        onLogin={handleLoginSuccess}
       />
     </div>
   );

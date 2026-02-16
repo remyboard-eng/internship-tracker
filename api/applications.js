@@ -9,16 +9,17 @@ export default async function handler(req, res) {
   // CORS headers
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'POST, PUT, DELETE, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, x-admin-password');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, x-admin-username, x-admin-password');
 
   if (req.method === 'OPTIONS') {
     return res.status(200).end();
   }
 
-  // Check admin password
+  // Check username and password
+  const username = req.headers['x-admin-username'];
   const password = req.headers['x-admin-password'];
-  if (password !== process.env.ADMIN_PASSWORD) {
-    return res.status(401).json({ error: 'Invalid admin password' });
+  if (username !== process.env.ADMIN_USERNAME || password !== process.env.ADMIN_PASSWORD) {
+    return res.status(401).json({ error: 'Invalid username or password' });
   }
 
   try {

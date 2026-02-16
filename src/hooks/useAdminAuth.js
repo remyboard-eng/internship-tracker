@@ -1,23 +1,44 @@
 import { useState, useCallback } from 'react';
 
-const SESSION_KEY = 'intern-tracker-admin-pw';
+const USER_KEY = 'intern-tracker-admin-user';
+const PASS_KEY = 'intern-tracker-admin-pw';
 
 export function useAdminAuth() {
+  const [adminUsername, setAdminUsername] = useState(
+    () => sessionStorage.getItem(USER_KEY) || null
+  );
   const [adminPassword, setAdminPassword] = useState(
-    () => sessionStorage.getItem(SESSION_KEY) || null
+    () => sessionStorage.getItem(PASS_KEY) || null
   );
 
-  const isAdmin = !!adminPassword;
+  const isAdmin = !!(adminUsername && adminPassword);
 
-  const login = useCallback((password) => {
-    sessionStorage.setItem(SESSION_KEY, password);
+  const login = useCallback(async (username, password) => {
+    // Validate against the server
+    const res = await fetch('/api/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ username, password }),
+    });
+
+    if (!res.ok) {
+      const err = await res.json();
+      throw new Error(err.error || 'Login failed');
+    }
+
+    sessionStorage.setItem(USER_KEY, username);
+    sessionStorage.setItem(PASS_KEY, password);
+    setAdminUsername(username);
     setAdminPassword(password);
+    return true;
   }, []);
 
   const logout = useCallback(() => {
-    sessionStorage.removeItem(SESSION_KEY);
+    sessionStorage.removeItem(USER_KEY);
+    sessionStorage.removeItem(PASS_KEY);
+    setAdminUsername(null);
     setAdminPassword(null);
   }, []);
 
-  return { isAdmin, adminPassword, login, logout };
+  return { isAdmin, adminUsername, adminPassword, login, logout };
 }

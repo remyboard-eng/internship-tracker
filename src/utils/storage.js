@@ -15,13 +15,14 @@ export async function loadApplications() {
   return data.map(snakeToCamel);
 }
 
-// ---- WRITE: through API route (password-protected) ----
+// ---- WRITE: through API route (username + password protected) ----
 
-export async function apiAddApplication(application, adminPassword) {
+export async function apiAddApplication(application, adminUsername, adminPassword) {
   const res = await fetch('/api/applications', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
+      'x-admin-username': adminUsername,
       'x-admin-password': adminPassword,
     },
     body: JSON.stringify(camelToSnake(application)),
@@ -33,11 +34,12 @@ export async function apiAddApplication(application, adminPassword) {
   return snakeToCamel(await res.json());
 }
 
-export async function apiUpdateApplication(id, updates, adminPassword) {
+export async function apiUpdateApplication(id, updates, adminUsername, adminPassword) {
   const res = await fetch('/api/applications', {
     method: 'PUT',
     headers: {
       'Content-Type': 'application/json',
+      'x-admin-username': adminUsername,
       'x-admin-password': adminPassword,
     },
     body: JSON.stringify({ id, ...camelToSnake(updates) }),
@@ -49,11 +51,12 @@ export async function apiUpdateApplication(id, updates, adminPassword) {
   return snakeToCamel(await res.json());
 }
 
-export async function apiDeleteApplication(id, adminPassword) {
+export async function apiDeleteApplication(id, adminUsername, adminPassword) {
   const res = await fetch('/api/applications', {
     method: 'DELETE',
     headers: {
       'Content-Type': 'application/json',
+      'x-admin-username': adminUsername,
       'x-admin-password': adminPassword,
     },
     body: JSON.stringify({ id }),

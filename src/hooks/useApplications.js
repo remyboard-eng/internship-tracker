@@ -32,7 +32,7 @@ export function useApplications() {
     return () => { cancelled = true; };
   }, []);
 
-  const addApplication = useCallback(async (data, adminPassword) => {
+  const addApplication = useCallback(async (data, adminUsername, adminPassword) => {
     const now = new Date().toISOString();
     const newApp = {
       id: uuidv4(),
@@ -50,21 +50,21 @@ export function useApplications() {
       createdAt: now,
       updatedAt: now,
     };
-    const saved = await apiAddApplication(newApp, adminPassword);
+    const saved = await apiAddApplication(newApp, adminUsername, adminPassword);
     setApplications((prev) => [saved, ...prev]);
     return saved;
   }, []);
 
-  const updateApplication = useCallback(async (id, data, adminPassword) => {
+  const updateApplication = useCallback(async (id, data, adminUsername, adminPassword) => {
     const updates = { ...data, updatedAt: new Date().toISOString() };
-    const saved = await apiUpdateApplication(id, updates, adminPassword);
+    const saved = await apiUpdateApplication(id, updates, adminUsername, adminPassword);
     setApplications((prev) =>
       prev.map((app) => (app.id === id ? saved : app))
     );
   }, []);
 
-  const deleteApplication = useCallback(async (id, adminPassword) => {
-    await apiDeleteApplication(id, adminPassword);
+  const deleteApplication = useCallback(async (id, adminUsername, adminPassword) => {
+    await apiDeleteApplication(id, adminUsername, adminPassword);
     setApplications((prev) => prev.filter((app) => app.id !== id));
   }, []);
 
