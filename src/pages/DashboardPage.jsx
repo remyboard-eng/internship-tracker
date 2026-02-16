@@ -6,21 +6,12 @@ import StatusChart from '../components/dashboard/StatusChart';
 import TimelineChart from '../components/dashboard/TimelineChart';
 import DeadlineBanner from '../components/dashboard/DeadlineBanner';
 import EmptyState from '../components/ui/EmptyState';
-import Button from '../components/ui/Button';
 import { useNavigate } from 'react-router';
-import { getSeedData } from '../utils/seedData';
-import { saveApplications } from '../utils/storage';
 
 export default function DashboardPage() {
   const { applications } = useAppContext();
   const deadlines = useDeadlines();
   const navigate = useNavigate();
-
-  function handleLoadSample() {
-    const seed = getSeedData();
-    saveApplications(seed);
-    window.location.reload();
-  }
 
   if (applications.length === 0) {
     return (
@@ -32,11 +23,6 @@ export default function DashboardPage() {
           actionLabel="Add Application"
           onAction={() => navigate('/applications')}
         />
-        <div className="text-center mt-2">
-          <Button variant="ghost" size="sm" onClick={handleLoadSample}>
-            or load sample data to explore
-          </Button>
-        </div>
       </div>
     );
   }

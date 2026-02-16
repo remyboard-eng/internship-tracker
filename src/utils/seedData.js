@@ -1,8 +1,19 @@
 import { v4 as uuidv4 } from 'uuid';
 
+// ============================================================
+// YOUR APPLICATIONS — Edit this file with your real data!
+//
+// To update what visitors see on your site:
+//   1. Edit the applications below
+//   2. Save the file
+//   3. Run: git add -A && git commit -m "update applications" && git push
+//   4. Vercel auto-deploys in ~30 seconds
+//
+// Status options: 'saved', 'applied', 'phone_screen', 'interview', 'offer', 'rejected'
+// ============================================================
+
 export function getSeedData() {
   const now = new Date();
-  const today = now.toISOString().split('T')[0];
 
   function daysAgo(n) {
     const d = new Date(now);

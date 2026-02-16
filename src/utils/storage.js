@@ -1,14 +1,25 @@
+import { getSeedData } from './seedData';
+
 const STORAGE_KEY = 'internship-tracker-apps';
 
 export function loadApplications() {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
-    if (!raw) return [];
+    if (!raw) {
+      // No saved data — load the default data so every visitor sees your applications
+      const defaults = getSeedData();
+      saveApplications(defaults);
+      return defaults;
+    }
     const parsed = JSON.parse(raw);
-    if (!Array.isArray(parsed)) return [];
+    if (!Array.isArray(parsed)) {
+      const defaults = getSeedData();
+      saveApplications(defaults);
+      return defaults;
+    }
     return parsed;
   } catch {
-    return [];
+    return getSeedData();
   }
 }
 
